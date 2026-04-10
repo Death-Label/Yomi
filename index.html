@@ -738,6 +738,15 @@
 
     // ── OBRA CONTEXT ──────────────────────────────────────────────
 
+    const TIPO_CONFIG = {
+      anime:        { icon: '📺', label: 'Nome do anime',       row: 'ep',    modalIcon: '📺', verb: 'assistindo' },
+      manga:        { icon: '📚', label: 'Nome do mangá',       row: 'cap',   modalIcon: '📚', verb: 'lendo'      },
+      serie:        { icon: '🎬', label: 'Nome da série',       row: 'ep',    modalIcon: '🎬', verb: 'assistindo' },
+      filme:        { icon: '🎞️', label: 'Nome do filme',       row: 'filme', modalIcon: '🎞️', verb: 'assistindo' },
+      dorama:       { icon: '🌸', label: 'Nome do dorama',      row: 'ep',    modalIcon: '🌸', verb: 'assistindo' },
+      'light novel':{ icon: '📖', label: 'Nome da light novel', row: 'cap',   modalIcon: '📖', verb: 'lendo'      },
+    };
+
     function updateContextChip() {
       const icon  = document.getElementById('ctx-icon');
       const label = document.getElementById('ctx-label');
@@ -763,15 +772,6 @@
     updateContextChip();
 
     // Show/hide fields and update labels based on type
-    const TIPO_CONFIG = {
-      anime:        { icon: '📺', label: 'Nome do anime',       row: 'ep',    modalIcon: '📺', verb: 'assistindo' },
-      manga:        { icon: '📚', label: 'Nome do mangá',       row: 'cap',   modalIcon: '📚', verb: 'lendo'      },
-      serie:        { icon: '🎬', label: 'Nome da série',       row: 'ep',    modalIcon: '🎬', verb: 'assistindo' },
-      filme:        { icon: '🎞️', label: 'Nome do filme',       row: 'filme', modalIcon: '🎞️', verb: 'assistindo' },
-      dorama:       { icon: '🌸', label: 'Nome do dorama',      row: 'ep',    modalIcon: '🌸', verb: 'assistindo' },
-      'light novel':{ icon: '📖', label: 'Nome da light novel', row: 'cap',   modalIcon: '📖', verb: 'lendo'      },
-    };
-
     function updateObraFields() {
       const tipo = document.getElementById('obra-tipo').value;
       const cfg  = TIPO_CONFIG[tipo] || TIPO_CONFIG.anime;
