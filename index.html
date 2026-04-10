@@ -624,40 +624,52 @@
   <div class="modal-overlay" id="obra-modal">
     <div class="modal">
       <div class="modal-handle"></div>
-      <h3>📺 Obra Atual</h3>
+      <h3 id="obra-modal-title">📺 Obra Atual</h3>
 
       <div class="modal-field">
-        <label>Nome da obra</label>
+        <label id="obra-nome-label">Nome do anime</label>
         <input type="text" id="obra-nome" placeholder="ex: Demon Slayer, One Piece...">
       </div>
 
-      <div class="modal-row">
+      <div class="modal-field">
+        <label>Tipo</label>
+        <select id="obra-tipo">
+          <option value="anime">Anime</option>
+          <option value="manga">Mangá</option>
+          <option value="serie">Série</option>
+          <option value="filme">Filme</option>
+          <option value="dorama">Dorama</option>
+          <option value="light novel">Light Novel</option>
+        </select>
+      </div>
+
+      <!-- Anime / Série / Dorama: Temporada + Episódio -->
+      <div class="modal-row" id="row-ep">
         <div class="modal-field">
-          <label>Tipo</label>
-          <select id="obra-tipo">
-            <option value="anime">Anime</option>
-            <option value="manga">Mangá</option>
-            <option value="serie">Série</option>
-            <option value="filme">Filme</option>
-            <option value="dorama">Dorama</option>
-            <option value="light novel">Light Novel</option>
-          </select>
-        </div>
-        <div class="modal-field" id="temporada-field">
           <label>Temporada</label>
           <input type="number" id="obra-temporada" placeholder="ex: 2" min="1" max="99">
         </div>
-      </div>
-
-      <div class="modal-row">
         <div class="modal-field">
-          <label id="ep-label">Episódio</label>
+          <label>Episódio</label>
           <input type="text" id="obra-episodio" placeholder="ex: 15">
         </div>
-        <div class="modal-field" id="capitulo-field">
-          <label>Capítulo (mangá)</label>
+      </div>
+
+      <!-- Mangá / Light Novel: Volume + Capítulo -->
+      <div class="modal-row" id="row-cap">
+        <div class="modal-field">
+          <label>Volume</label>
+          <input type="number" id="obra-volume" placeholder="ex: 3" min="1">
+        </div>
+        <div class="modal-field">
+          <label>Capítulo</label>
           <input type="text" id="obra-capitulo" placeholder="ex: 50">
         </div>
+      </div>
+
+      <!-- Filme: sem campos de progresso -->
+      <div id="row-filme" style="display:none">
+        <p style="font-size:13px;color:var(--text-muted);padding:4px 0 8px">Nenhum progresso necessário para filmes.</p>
       </div>
 
       <button class="btn-primary" id="obra-save-btn">✦ Confirmar</button>
@@ -721,23 +733,19 @@
     });
 
     // ── OBRA CONTEXT ──────────────────────────────────────────────
-    const TYPE_ICONS = {
-      anime: '📺', manga: '📚', serie: '🎬', filme: '🎞️',
-      dorama: '🌸', 'light novel': '📖'
-    };
-
-    const SEASON_NAMES = ['', 'S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10'];
 
     function updateContextChip() {
       const icon  = document.getElementById('ctx-icon');
       const label = document.getElementById('ctx-label');
 
       if (obra && obra.nome) {
-        icon.textContent = TYPE_ICONS[obra.tipo] || '📺';
+        const cfg = TIPO_CONFIG[obra.tipo] || TIPO_CONFIG.anime;
+        icon.textContent = cfg.icon;
 
         let parts = [];
         if (obra.temporada) parts.push(`T${obra.temporada}`);
         if (obra.episodio)  parts.push(`EP ${obra.episodio}`);
+        if (obra.volume)    parts.push(`Vol. ${obra.volume}`);
         if (obra.capitulo)  parts.push(`CAP ${obra.capitulo}`);
         const prog = parts.length ? ` — ${parts.join(' · ')}` : '';
 
@@ -750,19 +758,41 @@
 
     updateContextChip();
 
-    // Show/hide fields based on type
+    // Show/hide fields and update labels based on type
+    const TIPO_CONFIG = {
+      anime:        { icon: '📺', label: 'Nome do anime',       row: 'ep',    modalIcon: '📺', verb: 'assistindo' },
+      manga:        { icon: '📚', label: 'Nome do mangá',       row: 'cap',   modalIcon: '📚', verb: 'lendo'      },
+      serie:        { icon: '🎬', label: 'Nome da série',       row: 'ep',    modalIcon: '🎬', verb: 'assistindo' },
+      filme:        { icon: '🎞️', label: 'Nome do filme',       row: 'filme', modalIcon: '🎞️', verb: 'assistindo' },
+      dorama:       { icon: '🌸', label: 'Nome do dorama',      row: 'ep',    modalIcon: '🌸', verb: 'assistindo' },
+      'light novel':{ icon: '📖', label: 'Nome da light novel', row: 'cap',   modalIcon: '📖', verb: 'lendo'      },
+    };
+
     function updateObraFields() {
       const tipo = document.getElementById('obra-tipo').value;
-      const tempoField = document.getElementById('temporada-field');
-      const capField   = document.getElementById('capitulo-field');
-      const epLabel    = document.getElementById('ep-label');
+      const cfg  = TIPO_CONFIG[tipo] || TIPO_CONFIG.anime;
 
-      // Temporada: anime, serie, dorama
-      tempoField.style.display = ['anime','serie','dorama'].includes(tipo) ? '' : 'none';
-      // Capítulo: manga, light novel (or also anime — hide for filme)
-      capField.style.display   = ['manga','light novel','anime'].includes(tipo) ? '' : 'none';
-      // Ep label
-      epLabel.textContent = tipo === 'manga' || tipo === 'light novel' ? 'Capítulo' : 'Episódio';
+      // Labels
+      document.getElementById('obra-nome-label').textContent   = cfg.label;
+      document.getElementById('obra-modal-title').textContent  = `${cfg.modalIcon} Obra Atual`;
+      document.getElementById('obra-nome').placeholder         =
+        tipo === 'anime'  ? 'ex: Demon Slayer, One Piece...'  :
+        tipo === 'manga'  ? 'ex: Berserk, Chainsaw Man...'    :
+        tipo === 'serie'  ? 'ex: Stranger Things, Dark...'    :
+        tipo === 'filme'  ? 'ex: Spirited Away, Your Name...' :
+        tipo === 'dorama' ? 'ex: My Mister, Signal...'        :
+                            'ex: Sword Art Online, Re:Zero...';
+
+      // Rows
+      document.getElementById('row-ep').style.display    = cfg.row === 'ep'    ? '' : 'none';
+      document.getElementById('row-cap').style.display   = cfg.row === 'cap'   ? '' : 'none';
+      document.getElementById('row-filme').style.display = cfg.row === 'filme' ? '' : 'none';
+
+      // Context chip placeholder
+      if (!obra || !obra.nome) {
+        document.getElementById('ctx-label').innerHTML =
+          `Definir o que está ${cfg.verb}...`;
+      }
     }
 
     document.getElementById('obra-tipo').addEventListener('change', updateObraFields);
@@ -774,7 +804,8 @@
         let parts = [];
         if (obra.temporada) parts.push(`Temporada ${obra.temporada}`);
         if (obra.episodio)  parts.push(`Episódio ${obra.episodio}`);
-        if (obra.capitulo)  parts.push(`Capítulo ${obra.capitulo} do mangá/novel`);
+        if (obra.volume)    parts.push(`Volume ${obra.volume}`);
+        if (obra.capitulo)  parts.push(`Capítulo ${obra.capitulo}`);
         const prog = parts.length ? `, atualmente em: ${parts.join(', ')}` : '';
         obraCtx = `\n\nCONTEXTO ATUAL: O usuário está assistindo/lendo "${obra.nome}" (${obra.tipo})${prog}. Use isso para calibrar spoilers automaticamente — qualquer conteúdo além do progresso informado deve ser tratado como potencial spoiler.`;
       }
@@ -1035,14 +1066,22 @@ REGRAS ABSOLUTAS — siga todas sem exceção:
       }
     });
 
-    // Obra modal
+    // ── OBRA: abrir modal ────────────────────────────────────────
     document.getElementById('context-chip').addEventListener('click', () => {
       if (obra) {
         document.getElementById('obra-nome').value      = obra.nome      || '';
         document.getElementById('obra-tipo').value      = obra.tipo      || 'anime';
         document.getElementById('obra-temporada').value = obra.temporada || '';
         document.getElementById('obra-episodio').value  = obra.episodio  || '';
+        document.getElementById('obra-volume').value    = obra.volume    || '';
         document.getElementById('obra-capitulo').value  = obra.capitulo  || '';
+      } else {
+        document.getElementById('obra-nome').value      = '';
+        document.getElementById('obra-tipo').value      = 'anime';
+        document.getElementById('obra-temporada').value = '';
+        document.getElementById('obra-episodio').value  = '';
+        document.getElementById('obra-volume').value    = '';
+        document.getElementById('obra-capitulo').value  = '';
       }
       updateObraFields();
       openModal('obra-modal');
@@ -1051,18 +1090,21 @@ REGRAS ABSOLUTAS — siga todas sem exceção:
     document.getElementById('obra-save-btn').addEventListener('click', () => {
       const nome      = document.getElementById('obra-nome').value.trim();
       const tipo      = document.getElementById('obra-tipo').value;
+      const cfg       = TIPO_CONFIG[tipo] || TIPO_CONFIG.anime;
       const temporada = document.getElementById('obra-temporada').value.trim();
       const episodio  = document.getElementById('obra-episodio').value.trim();
+      const volume    = document.getElementById('obra-volume').value.trim();
       const capitulo  = document.getElementById('obra-capitulo').value.trim();
 
       if (nome) {
-        obra = { nome, tipo, temporada, episodio, capitulo };
+        obra = { nome, tipo, temporada, episodio, volume, capitulo };
         localStorage.setItem('yomi_obra', JSON.stringify(obra));
         updateContextChip();
 
         let prog = [];
         if (temporada) prog.push(`Temporada ${temporada}`);
         if (episodio)  prog.push(`EP ${episodio}`);
+        if (volume)    prog.push(`Vol. ${volume}`);
         if (capitulo)  prog.push(`CAP ${capitulo}`);
         const progStr = prog.length ? ` | ${prog.join(' · ')}` : '';
 
