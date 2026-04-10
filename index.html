@@ -554,9 +554,104 @@
     }
 
     * { scrollbar-width: thin; scrollbar-color: var(--surface3) transparent; }
+
+    /* ── SAKURA CANVAS ───────────────────────────────────────────── */
+    #sakura-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.55;
+    }
+
+    [data-theme="light"] #sakura-canvas { opacity: 0.7; }
+
+    /* ── RIPPLE ──────────────────────────────────────────────────── */
+    .ripple-host { position: relative; overflow: hidden; }
+
+    .ripple-wave {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transform: scale(0);
+      animation: ripple-expand 0.55s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes ripple-expand {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* ── SPRING BUBBLE ───────────────────────────────────────────── */
+    .msg-row { animation: bubble-spring 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+    @keyframes bubble-spring {
+      from { opacity: 0; transform: translateY(18px) scale(0.92); }
+      to   { opacity: 1; transform: translateY(0)    scale(1);    }
+    }
+
+    /* ── TYPEWRITER CURSOR ───────────────────────────────────────── */
+    .typing-cursor {
+      display: inline-block;
+      width: 2px; height: 1em;
+      background: var(--accent);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      border-radius: 1px;
+      animation: cursor-blink 0.7s step-end infinite;
+    }
+
+    @keyframes cursor-blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    /* ── LOGO SHIMMER ────────────────────────────────────────────── */
+    .logo-name {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo-name::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+      animation: shimmer-pass 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes shimmer-pass {
+      0%   { left: -100%; }
+      30%  { left: 150%;  }
+      100% { left: 150%;  }
+    }
+
+    /* ── SEND BTN PULSE ──────────────────────────────────────────── */
+    .send-btn.fired {
+      animation: send-pulse 0.4s ease-out;
+    }
+
+    @keyframes send-pulse {
+      0%   { box-shadow: 0 4px 14px var(--accent-glow); }
+      50%  { box-shadow: 0 0 0 10px transparent, 0 4px 24px var(--accent-glow); }
+      100% { box-shadow: 0 4px 14px var(--accent-glow); }
+    }
+
+    /* ── AVATAR GLOW PULSE (thinking) ───────────────────────────── */
+    .msg-avatar.yomi.thinking {
+      animation: avatar-think 1s ease-in-out infinite alternate;
+    }
+
+    @keyframes avatar-think {
+      from { box-shadow: 0 0 8px var(--accent-glow); }
+      to   { box-shadow: 0 0 20px var(--accent-glow), 0 0 36px var(--accent2-glow); }
+    }
   </style>
 </head>
 <body>
+  <canvas id="sakura-canvas"></canvas>
 
   <!-- HEADER -->
   <header class="header">
@@ -570,6 +665,7 @@
       </div>
     </div>
     <div class="header-actions">
+      <button class="icon-btn" id="new-chat-btn" title="Nova conversa">✦</button>
       <button class="icon-btn" id="theme-btn" title="Alternar tema">☀️</button>
       <button class="icon-btn" id="settings-btn" title="Configurações">⚙️</button>
     </div>
@@ -618,6 +714,19 @@
     <p>Instalar Yomi <span>Acesso rápido na tela inicial</span></p>
     <button class="install-btn" id="install-btn">Instalar</button>
     <button class="install-dismiss" id="install-dismiss">✕</button>
+  </div>
+
+  <!-- ── MODAL: NOVA CONVERSA ──────────────────────────────────── -->
+  <div class="modal-overlay" id="newchat-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h3>✦ Nova conversa</h3>
+      <p style="font-size:14px;color:var(--text-muted);line-height:1.6;margin-bottom:20px">
+        Isso vai apagar o histórico desta conversa. A obra atual será mantida.
+      </p>
+      <button class="btn-primary" id="newchat-confirm-btn">🗑️ Limpar e começar do zero</button>
+      <button class="btn-ghost" id="newchat-cancel-btn">Cancelar</button>
+    </div>
   </div>
 
   <!-- ── MODAL: OBRA ATUAL ──────────────────────────────────────── -->
@@ -722,7 +831,107 @@
     let obra    = JSON.parse(localStorage.getItem('yomi_obra')    || 'null');
     let isLoading = false;
 
-    // ── THEME ─────────────────────────────────────────────────────
+    // ── SAKURA PETALS ─────────────────────────────────────────────
+    (function initSakura() {
+      const canvas = document.getElementById('sakura-canvas');
+      const ctx    = canvas.getContext('2d');
+      let petals   = [];
+      const COUNT  = 28;
+
+      function resize() {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      function randomPetal() {
+        return {
+          x:       Math.random() * canvas.width,
+          y:       Math.random() * -canvas.height,
+          r:       3 + Math.random() * 5,
+          speedY:  0.6 + Math.random() * 1.2,
+          speedX:  -0.4 + Math.random() * 0.8,
+          wobble:  Math.random() * Math.PI * 2,
+          wobbleSpeed: 0.015 + Math.random() * 0.02,
+          angle:   Math.random() * Math.PI * 2,
+          spin:    (Math.random() - 0.5) * 0.04,
+          opacity: 0.4 + Math.random() * 0.5,
+        };
+      }
+
+      for (let i = 0; i < COUNT; i++) {
+        const p = randomPetal();
+        p.y = Math.random() * canvas.height; // scatter initial positions
+        petals.push(p);
+      }
+
+      function drawPetal(p) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
+        ctx.globalAlpha = p.opacity;
+
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const fill   = isDark ? '#f9a8d4' : '#fb7bb8';
+        const stroke = isDark ? '#f472b6' : '#e8649e';
+
+        ctx.beginPath();
+        // Simple 5-petal sakura shape using bezier
+        for (let i = 0; i < 5; i++) {
+          const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+          const bx = Math.cos(a) * p.r * 1.2;
+          const by = Math.sin(a) * p.r * 1.2;
+          const cp1x = Math.cos(a - 0.3) * p.r * 0.5;
+          const cp1y = Math.sin(a - 0.3) * p.r * 0.5;
+          const cp2x = Math.cos(a + 0.3) * p.r * 0.5;
+          const cp2y = Math.sin(a + 0.3) * p.r * 0.5;
+          if (i === 0) ctx.moveTo(cp1x, cp1y);
+          ctx.bezierCurveTo(cp1x, cp1y, bx, by, cp2x, cp2y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        petals.forEach(p => {
+          p.wobble    += p.wobbleSpeed;
+          p.x         += p.speedX + Math.sin(p.wobble) * 0.5;
+          p.y         += p.speedY;
+          p.angle     += p.spin;
+          drawPetal(p);
+          if (p.y > canvas.height + 20) {
+            Object.assign(p, randomPetal());
+          }
+        });
+        requestAnimationFrame(animate);
+      }
+      animate();
+    })();
+
+    // ── RIPPLE ────────────────────────────────────────────────────
+    function addRipple(e, el) {
+      const rect = el.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      const size = Math.max(rect.width, rect.height) * 2;
+      const wave = document.createElement('span');
+      wave.className = 'ripple-wave';
+      wave.style.cssText = `width:${size}px;height:${size}px;left:${x - size/2}px;top:${y - size/2}px`;
+      el.appendChild(wave);
+      wave.addEventListener('animationend', () => wave.remove());
+    }
+
+    document.querySelectorAll('.icon-btn, .btn-primary, .btn-ghost, .send-btn, .suggestion-pill, .context-chip').forEach(el => {
+      el.classList.add('ripple-host');
+      el.addEventListener('pointerdown', e => addRipple(e, el));
+    });
     function applyTheme(t) {
       theme = t;
       document.documentElement.setAttribute('data-theme', t);
@@ -885,7 +1094,6 @@ REGRAS INEGOCIÁVEIS:
 
       const bubble = document.createElement('div');
       bubble.className = `msg-bubble ${role === 'model' ? 'yomi' : 'user'}`;
-      bubble.innerHTML = `<p>${renderMarkdown(text)}</p>`;
 
       const ts = document.createElement('div');
       ts.className = 'msg-timestamp';
@@ -896,7 +1104,40 @@ REGRAS INEGOCIÁVEIS:
       row.appendChild(av);
       row.appendChild(col);
       chatArea.appendChild(row);
-      chatArea.scrollTop = chatArea.scrollHeight;
+
+      if (role === 'model' && animate) {
+        // Typewriter effect
+        const html    = renderMarkdown(text);
+        const plain   = text; // usamos o texto puro para digitar
+        const cursor  = document.createElement('span');
+        cursor.className = 'typing-cursor';
+        bubble.innerHTML = '<p></p>';
+        const p = bubble.querySelector('p');
+        p.appendChild(cursor);
+
+        let i = 0;
+        const speed = 18; // ms por caractere
+        function type() {
+          if (i < plain.length) {
+            // escreve o HTML renderizado progressivamente usando texto puro
+            p.innerHTML = renderMarkdown(plain.slice(0, i + 1));
+            const cur2 = document.createElement('span');
+            cur2.className = 'typing-cursor';
+            p.appendChild(cur2);
+            i++;
+            chatArea.scrollTop = chatArea.scrollHeight;
+            setTimeout(type, speed);
+          } else {
+            // finaliza com html completo sem cursor
+            bubble.innerHTML = `<p>${renderMarkdown(plain)}</p>`;
+            chatArea.scrollTop = chatArea.scrollHeight;
+          }
+        }
+        type();
+      } else {
+        bubble.innerHTML = `<p>${renderMarkdown(text)}</p>`;
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
     }
 
     function addTypingIndicator() {
@@ -906,7 +1147,7 @@ REGRAS INEGOCIÁVEIS:
       row.id = 'typing-row';
 
       const av = document.createElement('div');
-      av.className = 'msg-avatar yomi';
+      av.className = 'msg-avatar yomi thinking';
       av.innerHTML = `<img src="icon-192.png" alt="Yomi" onerror="this.style.display='none'">`;
 
       const bubble = document.createElement('div');
@@ -1024,6 +1265,10 @@ REGRAS INEGOCIÁVEIS:
       if (!text || isLoading) return;
       msgInput.value = '';
       autoResize();
+      // send pulse
+      sendBtn.classList.remove('fired');
+      void sendBtn.offsetWidth; // reflow
+      sendBtn.classList.add('fired');
       addMessage('user', text);
       await sendToGemini(text);
     }
@@ -1047,6 +1292,23 @@ REGRAS INEGOCIÁVEIS:
 
     document.querySelectorAll('.modal-overlay').forEach(o => {
       o.addEventListener('click', e => { if (e.target === o) closeModal(o.id); });
+    });
+
+    // Nova conversa
+    document.getElementById('new-chat-btn').addEventListener('click', () => {
+      if (history.length === 0) return;
+      openModal('newchat-modal');
+    });
+
+    document.getElementById('newchat-confirm-btn').addEventListener('click', () => {
+      history = [];
+      localStorage.removeItem('yomi_history');
+      closeModal('newchat-modal');
+      location.reload();
+    });
+
+    document.getElementById('newchat-cancel-btn').addEventListener('click', () => {
+      closeModal('newchat-modal');
     });
 
     document.getElementById('settings-btn').addEventListener('click', () => {
