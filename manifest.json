@@ -1,0 +1,19 @@
+{
+  "name": "Yomi — Companheira de Anime",
+  "short_name": "Yomi",
+  "description": "Sua companheira para animes, mangás, séries, filmes e doramas. Sem spoilers, sem invenção.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait-primary",
+  "background_color": "#0d0d16",
+  "theme_color": "#0d0d16",
+  "lang": "pt-BR",
+  "categories": ["entertainment", "lifestyle"],
+  "icons": [
+    { "src": "icon-96.png",  "sizes": "96x96",   "type": "image/png" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": []
+}

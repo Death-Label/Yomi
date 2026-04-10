@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Yomi">
+  <meta name="application-name" content="Yomi">
+  <meta name="description" content="Sua companheira para animes, mangás, séries e doramas. Sem spoilers, sem invenção.">
+  <meta name="theme-color" id="theme-meta" content="#0d0d16">
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" href="icon-32.png" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <title>Yomi ✦ Companheira de Anime</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --radius-bubble: 20px;
+      --radius-card:   18px;
+      --radius-pill:   999px;
+      --font-main:     'Nunito', sans-serif;
+      --font-accent:   'Noto Serif JP', serif;
+      --transition:    0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+      --bg:            #0d0d16;
+      --bg-dot:        rgba(167, 139, 250, 0.04);
+      --surface:       #16162a;
+      --surface2:      #1e1e38;
+      --surface3:      #252542;
+      --border:        rgba(255,255,255,0.07);
+      --border2:       rgba(255,255,255,0.12);
+      --text:          #e8e4f2;
+      --text-muted:    #7a78a0;
+      --text-dim:      #4a4870;
+      --accent:        #f472b6;
+      --accent-glow:   rgba(244,114,182,0.25);
+      --accent2:       #a78bfa;
+      --accent2-glow:  rgba(167,139,250,0.2);
+      --user-bubble:   #2a1a42;
+      --user-border:   rgba(167,139,250,0.3);
+      --yomi-bubble:   #141428;
+      --yomi-border:   rgba(244,114,182,0.2);
+      --input-bg:      #1a1a30;
+      --overlay:       rgba(0,0,0,0.72);
+      --shadow-sm:     0 2px 12px rgba(0,0,0,0.4);
+      --shadow-md:     0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    [data-theme="light"] {
+      --bg:            #faf6f0;
+      --bg-dot:        rgba(180,100,150,0.05);
+      --surface:       #ffffff;
+      --surface2:      #fef3f8;
+      --surface3:      #fde8f2;
+      --border:        rgba(0,0,0,0.07);
+      --border2:       rgba(0,0,0,0.12);
+      --text:          #1a0a2e;
+      --text-muted:    #7a5a8a;
+      --text-dim:      #c4a0cc;
+      --accent:        #db2777;
+      --accent-glow:   rgba(219,39,119,0.15);
+      --accent2:       #7c3aed;
+      --accent2-glow:  rgba(124,58,237,0.12);
+      --user-bubble:   #f3e8ff;
+      --user-border:   rgba(124,58,237,0.2);
+      --yomi-bubble:   #fff0f6;
+      --yomi-border:   rgba(219,39,119,0.15);
+      --input-bg:      #fff;
+      --overlay:       rgba(0,0,0,0.4);
+      --shadow-sm:     0 2px 12px rgba(0,0,0,0.08);
+      --shadow-md:     0 8px 32px rgba(0,0,0,0.12);
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: var(--font-main);
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      position: relative;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    /* Screentone manga background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, var(--bg-dot) 1.5px, transparent 1.5px);
+      background-size: 20px 20px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ──────────────────────────────────────────────────── */
+    .header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px 12px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      flex-shrink: 0;
+    }
+
+    .header-logo { display: flex; align-items: center; gap: 10px; }
+
+    .logo-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 14px var(--accent-glow);
+      flex-shrink: 0;
+    }
+
+    .logo-text { display: flex; flex-direction: column; line-height: 1; }
+
+    .logo-jp {
+      font-family: var(--font-accent);
+      font-size: 10px; color: var(--accent);
+      letter-spacing: 3px; opacity: 0.8;
+    }
+
+    .logo-name {
+      font-size: 20px; font-weight: 900; letter-spacing: -0.5px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .header-actions { display: flex; gap: 8px; }
+
+    .icon-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border2);
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .icon-btn:hover, .icon-btn:active {
+      background: var(--surface3); color: var(--text);
+      border-color: var(--accent2);
+      box-shadow: 0 0 8px var(--accent2-glow);
+    }
+
+    /* ── CONTEXT BAR ─────────────────────────────────────────────── */
+    .context-bar {
+      position: relative; z-index: 9;
+      padding: 8px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .context-chip {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-pill);
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: all var(--transition);
+      max-width: 100%;
+    }
+
+    .context-chip:hover { border-color: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+    .context-chip-icon  { font-size: 14px; flex-shrink: 0; }
+
+    .context-chip-text {
+      font-size: 12px; font-weight: 600; color: var(--text-muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .context-chip-text .ctx-nome { color: var(--accent); }
+    .context-chip-edit { font-size: 11px; color: var(--text-dim); flex-shrink: 0; }
+
+    /* ── CHAT AREA ───────────────────────────────────────────────── */
+    .chat-area {
+      flex: 1; overflow-y: auto;
+      padding: 16px;
+      display: flex; flex-direction: column; gap: 16px;
+      position: relative; z-index: 1;
+      scroll-behavior: smooth;
+    }
+
+    .chat-area::-webkit-scrollbar { width: 4px; }
+    .chat-area::-webkit-scrollbar-track { background: transparent; }
+    .chat-area::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 4px; }
+
+    /* ── WELCOME ─────────────────────────────────────────────────── */
+    .welcome {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 20px; flex: 1;
+      padding: 20px 10px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .welcome-avatar {
+      width: 80px; height: 80px; border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 0 30px var(--accent-glow), 0 0 60px var(--accent2-glow);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .welcome-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-8px); }
+    }
+
+    .welcome-title { text-align: center; }
+
+    .welcome-title h2 {
+      font-size: 22px; font-weight: 800;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .welcome-title p {
+      font-size: 13px; color: var(--text-muted);
+      margin-top: 6px; line-height: 1.5; max-width: 280px;
+    }
+
+    .suggestions {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      justify-content: center; max-width: 340px;
+    }
+
+    .suggestion-pill {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-pill);
+      padding: 8px 14px;
+      font-size: 12px; font-weight: 600; color: var(--text-muted);
+      cursor: pointer;
+      transition: all var(--transition);
+      display: flex; align-items: center; gap: 5px;
+    }
+
+    .suggestion-pill:hover, .suggestion-pill:active {
+      background: var(--surface3); border-color: var(--accent2); color: var(--text);
+      box-shadow: 0 0 10px var(--accent2-glow);
+      transform: translateY(-1px);
+    }
+
+    /* ── MESSAGES ────────────────────────────────────────────────── */
+    .msg-row {
+      display: flex; gap: 10px;
+      animation: fadeUp 0.35s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-row.user { flex-direction: row-reverse; }
+
+    .msg-avatar {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; margin-top: 2px; overflow: hidden;
+    }
+
+    .msg-avatar.yomi {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    .msg-avatar.yomi img { width: 100%; height: 100%; object-fit: cover; }
+
+    .msg-avatar.user-av { background: var(--surface3); border: 1px solid var(--user-border); }
+
+    .msg-col {
+      display: flex; flex-direction: column; max-width: 80%;
+    }
+
+    .msg-row.user .msg-col { align-items: flex-end; }
+
+    .msg-bubble {
+      padding: 11px 16px;
+      border-radius: var(--radius-bubble);
+      font-size: 14px; line-height: 1.65;
+    }
+
+    .msg-bubble.yomi {
+      background: var(--yomi-bubble); border: 1px solid var(--yomi-border);
+      border-bottom-left-radius: 6px; color: var(--text);
+    }
+
+    .msg-bubble.user {
+      background: var(--user-bubble); border: 1px solid var(--user-border);
+      border-bottom-right-radius: 6px; color: var(--text);
+    }
+
+    /* Markdown inside bubbles */
+    .msg-bubble strong { color: var(--accent); font-weight: 700; }
+    .msg-bubble em     { opacity: 0.85; }
+    .msg-bubble ul, .msg-bubble ol { padding-left: 18px; }
+    .msg-bubble li     { margin: 4px 0; }
+    .msg-bubble code   {
+      background: var(--surface3); padding: 2px 6px;
+      border-radius: 6px; font-family: monospace; font-size: 12px;
+    }
+    .msg-bubble p + p  { margin-top: 8px; }
+
+    .msg-timestamp {
+      font-size: 10px; color: var(--text-dim);
+      margin-top: 4px; padding: 0 4px;
+    }
+
+    .msg-row.user .msg-timestamp { text-align: right; }
+
+    /* Typing dots */
+    .typing-bubble { display: flex; gap: 5px; align-items: center; padding: 14px 18px; }
+
+    .typing-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+      animation: bounce 1.2s infinite;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30%            { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* ── INPUT BAR ───────────────────────────────────────────────── */
+    .input-bar {
+      position: relative; z-index: 10;
+      padding: 10px 14px;
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: flex-end; gap: 10px;
+    }
+
+    .input-wrap {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1.5px solid var(--border2);
+      border-radius: 22px;
+      display: flex; align-items: flex-end;
+      padding: 10px 14px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      min-height: 46px;
+    }
+
+    .input-wrap:focus-within {
+      border-color: var(--accent2);
+      box-shadow: 0 0 12px var(--accent2-glow);
+    }
+
+    textarea {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-family: var(--font-main);
+      font-size: 14px; line-height: 1.5; resize: none;
+      max-height: 120px; overflow-y: auto;
+    }
+
+    textarea::placeholder { color: var(--text-dim); }
+
+    .send-btn {
+      width: 44px; height: 44px; border-radius: 50%; border: none;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color: white; font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      flex-shrink: 0;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    .send-btn:hover  { transform: scale(1.08); box-shadow: 0 6px 20px var(--accent-glow); }
+    .send-btn:active { transform: scale(0.95); }
+    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── MODALS ──────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: var(--overlay); z-index: 100;
+      display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity var(--transition);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      width: 100%; max-width: 480px;
+      background: var(--surface);
+      border-radius: 28px 28px 0 0;
+      border: 1px solid var(--border2); border-bottom: none;
+      padding: 24px 22px;
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      max-height: 92dvh; overflow-y: auto;
+    }
+
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal-handle {
+      width: 40px; height: 4px; background: var(--border2);
+      border-radius: 4px; margin: 0 auto 20px;
+    }
+
+    .modal h3 {
+      font-size: 18px; font-weight: 800; margin-bottom: 18px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .modal-field { margin-bottom: 14px; }
+
+    .modal-field label {
+      display: block; font-size: 11px; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 0.8px; margin-bottom: 7px;
+    }
+
+    .modal-field input,
+    .modal-field select {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1.5px solid var(--border2);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-family: var(--font-main); font-size: 14px; color: var(--text);
+      outline: none;
+      transition: border-color var(--transition);
+      -webkit-appearance: none; appearance: none;
+    }
+
+    .modal-field input:focus,
+    .modal-field select:focus {
+      border-color: var(--accent2);
+      box-shadow: 0 0 10px var(--accent2-glow);
+    }
+
+    .modal-field select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239090b8' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+      padding-right: 36px; cursor: pointer;
+    }
+
+    .modal-field select option { background: var(--surface2); color: var(--text); }
+
+    /* 2-col row */
+    .modal-row { display: flex; gap: 10px; }
+    .modal-row .modal-field { flex: 1; }
+
+    /* 3-col row */
+    .modal-row-3 { display: flex; gap: 10px; }
+    .modal-row-3 .modal-field { flex: 1; }
+    .modal-row-3 .modal-field.wide { flex: 1.6; }
+
+    .btn-primary {
+      width: 100%; padding: 14px; border-radius: var(--radius-pill); border: none;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color: white; font-family: var(--font-main); font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: all var(--transition);
+      box-shadow: 0 4px 16px var(--accent-glow); margin-top: 4px;
+    }
+
+    .btn-primary:hover  { transform: translateY(-1px); box-shadow: 0 6px 22px var(--accent-glow); }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .btn-ghost {
+      width: 100%; padding: 12px; border-radius: var(--radius-pill);
+      border: 1.5px solid var(--border2); background: transparent;
+      color: var(--text-muted); font-family: var(--font-main);
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: all var(--transition); margin-top: 8px;
+    }
+
+    .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+
+    .api-key-note { font-size: 11px; color: var(--text-dim); margin-top: 6px; line-height: 1.4; }
+    .api-key-note a { color: var(--accent2); text-decoration: none; }
+
+    .divider { height: 1px; background: var(--border); margin: 18px 0; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--surface3); border: 1px solid var(--border2);
+      border-radius: var(--radius-pill); padding: 4px 12px;
+      font-size: 11px; font-weight: 700; color: var(--text-muted);
+    }
+
+    .no-api-banner {
+      margin: 10px 0; padding: 12px 16px;
+      background: var(--surface2);
+      border: 1.5px solid rgba(244,114,182,0.3);
+      border-radius: 16px;
+      font-size: 13px; text-align: center; color: var(--text-muted); line-height: 1.5;
+    }
+
+    .no-api-banner strong { color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+    /* Install banner */
+    .install-banner {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+      padding: 14px 18px;
+      padding-bottom: max(14px, env(safe-area-inset-bottom));
+      background: var(--surface2);
+      border-top: 1px solid var(--border2);
+      display: flex; align-items: center; gap: 12px;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .install-banner.show { transform: translateY(0); }
+
+    .install-banner p { flex: 1; font-size: 13px; font-weight: 600; line-height: 1.4; }
+    .install-banner p span { display: block; font-size: 11px; color: var(--text-muted); font-weight: 400; }
+
+    .install-btn {
+      padding: 9px 18px; border-radius: var(--radius-pill); border: none;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color: white; font-family: var(--font-main); font-size: 13px; font-weight: 700;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    }
+
+    .install-dismiss {
+      background: none; border: none; color: var(--text-dim);
+      font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0;
+    }
+
+    * { scrollbar-width: thin; scrollbar-color: var(--surface3) transparent; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-logo">
+      <div class="logo-avatar">
+        <img src="icon-192.png" alt="Yomi" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentNode.textContent='📖'">
+      </div>
+      <div class="logo-text">
+        <span class="logo-jp">よみ</span>
+        <span class="logo-name">Yomi</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="theme-btn" title="Alternar tema">☀️</button>
+      <button class="icon-btn" id="settings-btn" title="Configurações">⚙️</button>
+    </div>
+  </header>
+
+  <!-- CONTEXT BAR -->
+  <div class="context-bar">
+    <div class="context-chip" id="context-chip">
+      <span class="context-chip-icon" id="ctx-icon">📺</span>
+      <span class="context-chip-text" id="ctx-label">Definir o que está assistindo...</span>
+      <span class="context-chip-edit">✏️</span>
+    </div>
+  </div>
+
+  <!-- CHAT AREA -->
+  <div class="chat-area" id="chat-area">
+    <div class="welcome" id="welcome-screen">
+      <div class="welcome-avatar">
+        <img src="icon-192.png" alt="Yomi" onerror="this.parentNode.style.background='linear-gradient(135deg,#a78bfa,#f472b6)';this.parentNode.innerHTML='📖'">
+      </div>
+      <div class="welcome-title">
+        <h2>Olá! Sou a Yomi ✦</h2>
+        <p>Sua companheira para animes, mangás, séries, filmes e doramas. Sem spoilers, sem invenção — só o que é oficial.</p>
+      </div>
+      <div class="suggestions" id="suggestions">
+        <div class="suggestion-pill" data-text="Me explica um personagem dessa obra">🎭 Explicar personagem</div>
+        <div class="suggestion-pill" data-text="O que aconteceu nesse episódio/capítulo?">📺 Resumir episódio</div>
+        <div class="suggestion-pill" data-text="Quais são os temas principais dessa obra?">💡 Temas da obra</div>
+        <div class="suggestion-pill" data-text="Me indique obras parecidas com essa">✨ Obras similares</div>
+        <div class="suggestion-pill" data-text="Quando esse mangá foi adaptado para anime?">📅 Linha do tempo</div>
+        <div class="suggestion-pill" data-text="Tem diferenças entre o anime e o mangá?">🔍 Anime vs Mangá</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUT BAR -->
+  <div class="input-bar">
+    <div class="input-wrap">
+      <textarea id="msg-input" placeholder="Pergunte algo sobre a obra..." rows="1"></textarea>
+    </div>
+    <button class="send-btn" id="send-btn" title="Enviar">➤</button>
+  </div>
+
+  <!-- INSTALL BANNER -->
+  <div class="install-banner" id="install-banner">
+    <p>Instalar Yomi <span>Acesso rápido na tela inicial</span></p>
+    <button class="install-btn" id="install-btn">Instalar</button>
+    <button class="install-dismiss" id="install-dismiss">✕</button>
+  </div>
+
+  <!-- ── MODAL: OBRA ATUAL ──────────────────────────────────────── -->
+  <div class="modal-overlay" id="obra-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h3>📺 Obra Atual</h3>
+
+      <div class="modal-field">
+        <label>Nome da obra</label>
+        <input type="text" id="obra-nome" placeholder="ex: Demon Slayer, One Piece...">
+      </div>
+
+      <div class="modal-row">
+        <div class="modal-field">
+          <label>Tipo</label>
+          <select id="obra-tipo">
+            <option value="anime">Anime</option>
+            <option value="manga">Mangá</option>
+            <option value="serie">Série</option>
+            <option value="filme">Filme</option>
+            <option value="dorama">Dorama</option>
+            <option value="light novel">Light Novel</option>
+          </select>
+        </div>
+        <div class="modal-field" id="temporada-field">
+          <label>Temporada</label>
+          <input type="number" id="obra-temporada" placeholder="ex: 2" min="1" max="99">
+        </div>
+      </div>
+
+      <div class="modal-row">
+        <div class="modal-field">
+          <label id="ep-label">Episódio</label>
+          <input type="text" id="obra-episodio" placeholder="ex: 15">
+        </div>
+        <div class="modal-field" id="capitulo-field">
+          <label>Capítulo (mangá)</label>
+          <input type="text" id="obra-capitulo" placeholder="ex: 50">
+        </div>
+      </div>
+
+      <button class="btn-primary" id="obra-save-btn">✦ Confirmar</button>
+      <button class="btn-ghost" id="obra-clear-btn">Limpar obra atual</button>
+    </div>
+  </div>
+
+  <!-- ── MODAL: CONFIGURAÇÕES ──────────────────────────────────── -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h3>⚙️ Configurações</h3>
+
+      <div class="modal-field">
+        <label>Chave API Gemini</label>
+        <input type="password" id="api-key-input" placeholder="AIza...">
+        <p class="api-key-note">
+          Obtenha sua chave gratuita em
+          <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>.
+          A chave fica salva apenas neste dispositivo.
+        </p>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="modal-field">
+        <label>Modelo</label>
+        <div class="badge">✦ gemini-2.5-flash-preview-04-17</div>
+        <p class="api-key-note" style="margin-top:8px">Gemini 2.5 Flash — rápido e gratuito no tier básico.</p>
+      </div>
+
+      <button class="btn-primary" id="api-save-btn">💾 Salvar chave</button>
+      <button class="btn-ghost" id="clear-history-btn">🗑️ Limpar histórico do chat</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       JAVASCRIPT
+  ═══════════════════════════════════════════════════════════════ -->
+  <script>
+    const MODEL = 'gemini-2.5-flash-preview-04-17';
+
+    let apiKey  = localStorage.getItem('yomi_api_key') || '';
+    let theme   = localStorage.getItem('yomi_theme')   || 'dark';
+    let history = JSON.parse(localStorage.getItem('yomi_history') || '[]');
+    let obra    = JSON.parse(localStorage.getItem('yomi_obra')    || 'null');
+    let isLoading = false;
+
+    // ── THEME ─────────────────────────────────────────────────────
+    function applyTheme(t) {
+      theme = t;
+      document.documentElement.setAttribute('data-theme', t);
+      document.getElementById('theme-btn').textContent = t === 'dark' ? '☀️' : '🌙';
+      document.getElementById('theme-meta').content = t === 'dark' ? '#0d0d16' : '#faf6f0';
+      localStorage.setItem('yomi_theme', t);
+    }
+
+    applyTheme(theme);
+    document.getElementById('theme-btn').addEventListener('click', () => {
+      applyTheme(theme === 'dark' ? 'light' : 'dark');
+    });
+
+    // ── OBRA CONTEXT ──────────────────────────────────────────────
+    const TYPE_ICONS = {
+      anime: '📺', manga: '📚', serie: '🎬', filme: '🎞️',
+      dorama: '🌸', 'light novel': '📖'
+    };
+
+    const SEASON_NAMES = ['', 'S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10'];
+
+    function updateContextChip() {
+      const icon  = document.getElementById('ctx-icon');
+      const label = document.getElementById('ctx-label');
+
+      if (obra && obra.nome) {
+        icon.textContent = TYPE_ICONS[obra.tipo] || '📺';
+
+        let parts = [];
+        if (obra.temporada) parts.push(`T${obra.temporada}`);
+        if (obra.episodio)  parts.push(`EP ${obra.episodio}`);
+        if (obra.capitulo)  parts.push(`CAP ${obra.capitulo}`);
+        const prog = parts.length ? ` — ${parts.join(' · ')}` : '';
+
+        label.innerHTML = `<span class="ctx-nome">${obra.nome}</span>${prog}`;
+      } else {
+        icon.textContent = '📺';
+        label.innerHTML  = 'Definir o que está assistindo...';
+      }
+    }
+
+    updateContextChip();
+
+    // Show/hide fields based on type
+    function updateObraFields() {
+      const tipo = document.getElementById('obra-tipo').value;
+      const tempoField = document.getElementById('temporada-field');
+      const capField   = document.getElementById('capitulo-field');
+      const epLabel    = document.getElementById('ep-label');
+
+      // Temporada: anime, serie, dorama
+      tempoField.style.display = ['anime','serie','dorama'].includes(tipo) ? '' : 'none';
+      // Capítulo: manga, light novel (or also anime — hide for filme)
+      capField.style.display   = ['manga','light novel','anime'].includes(tipo) ? '' : 'none';
+      // Ep label
+      epLabel.textContent = tipo === 'manga' || tipo === 'light novel' ? 'Capítulo' : 'Episódio';
+    }
+
+    document.getElementById('obra-tipo').addEventListener('change', updateObraFields);
+
+    // ── SYSTEM PROMPT ─────────────────────────────────────────────
+    function buildSystemPrompt() {
+      let obraCtx = '';
+      if (obra && obra.nome) {
+        let parts = [];
+        if (obra.temporada) parts.push(`Temporada ${obra.temporada}`);
+        if (obra.episodio)  parts.push(`Episódio ${obra.episodio}`);
+        if (obra.capitulo)  parts.push(`Capítulo ${obra.capitulo} do mangá/novel`);
+        const prog = parts.length ? `, atualmente em: ${parts.join(', ')}` : '';
+        obraCtx = `\n\nCONTEXTO ATUAL: O usuário está assistindo/lendo "${obra.nome}" (${obra.tipo})${prog}. Use isso para calibrar spoilers automaticamente — qualquer conteúdo além do progresso informado deve ser tratado como potencial spoiler.`;
+      }
+
+      return `Você é Yomi, uma companheira especializada em animes, mangás, séries, filmes, doramas e light novels.${obraCtx}
+
+REGRAS ABSOLUTAS — siga todas sem exceção:
+
+1. ESCOPO: Responda SOMENTE sobre animes, mangás, séries, filmes, doramas e light novels. Para qualquer outro tema, recuse gentilmente explicando que não é o seu escopo.
+
+2. PRECISÃO ZERO-ALUCINAÇÃO: Use APENAS informações de fontes oficiais da obra. JAMAIS invente, suponha ou preencha lacunas que não existem nas fontes oficiais. Se não souber com certeza, diga claramente "Não tenho certeza sobre isso nas fontes oficiais" e não arrisque. Prefira admitir ignorância a inventar.
+
+3. SPOILERS — protocolo obrigatório em 3 etapas:
+   a. Se pode ser spoiler e você não sabe o progresso do usuário → PERGUNTE em que ponto da obra ele está antes de responder.
+   b. Se você sabe o progresso e a informação é spoiler → PERGUNTE se quer o spoiler antes de revelar.
+   c. Se o usuário confirmou que quer o spoiler → responda normalmente.
+   d. Informações já cobertas pelo progresso informado pelo usuário não são spoiler.
+
+4. ADAPTAÇÕES: Se o usuário está no anime, priorize o anime como base. Mencione diferenças relevantes do mangá/light novel quando for pertinente, mas identifique claramente a fonte ("no mangá..." / "na light novel...").
+
+5. ESTILO: Seja concisa, direta e calorosa. Sem introduções longas. Responda exatamente o que foi perguntado. Use markdown básico (negrito, listas) para organizar respostas longas.
+
+6. CERTEZA: Em caso de dúvida sobre um fato específico (data, episódio exato, número de arco, etc), NÃO afirme — diga que não tem certeza e sugira verificar em fontes como MyAnimeList ou o site oficial.`;
+    }
+
+    // ── MARKDOWN RENDER (básico) ──────────────────────────────────
+    function renderMarkdown(text) {
+      return text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g,     '<em>$1</em>')
+        .replace(/`(.+?)`/g,       '<code>$1</code>')
+        .replace(/^#{1,3} (.+)$/gm, '<strong>$1</strong>')
+        .replace(/^[-•] (.+)$/gm,   '• $1')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g,   '<br>');
+    }
+
+    // ── CHAT RENDERING ────────────────────────────────────────────
+    const chatArea = document.getElementById('chat-area');
+    const welcome  = document.getElementById('welcome-screen');
+
+    function timeStr() {
+      return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function hideWelcome() {
+      if (welcome) welcome.style.display = 'none';
+    }
+
+    function addMessage(role, text, animate = true) {
+      hideWelcome();
+
+      const row = document.createElement('div');
+      row.className = `msg-row ${role}`;
+      if (!animate) row.style.animation = 'none';
+
+      const av = document.createElement('div');
+      av.className = `msg-avatar ${role === 'model' ? 'yomi' : 'user-av'}`;
+
+      if (role === 'model') {
+        av.innerHTML = `<img src="icon-192.png" alt="Yomi" onerror="this.style.display='none'">`;
+      } else {
+        av.textContent = '🙂';
+      }
+
+      const col = document.createElement('div');
+      col.className = 'msg-col';
+
+      const bubble = document.createElement('div');
+      bubble.className = `msg-bubble ${role === 'model' ? 'yomi' : 'user'}`;
+      bubble.innerHTML = `<p>${renderMarkdown(text)}</p>`;
+
+      const ts = document.createElement('div');
+      ts.className = 'msg-timestamp';
+      ts.textContent = timeStr();
+
+      col.appendChild(bubble);
+      col.appendChild(ts);
+      row.appendChild(av);
+      row.appendChild(col);
+      chatArea.appendChild(row);
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function addTypingIndicator() {
+      hideWelcome();
+      const row = document.createElement('div');
+      row.className = 'msg-row model';
+      row.id = 'typing-row';
+
+      const av = document.createElement('div');
+      av.className = 'msg-avatar yomi';
+      av.innerHTML = `<img src="icon-192.png" alt="Yomi" onerror="this.style.display='none'">`;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble yomi typing-bubble';
+      bubble.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+
+      row.appendChild(av);
+      row.appendChild(bubble);
+      chatArea.appendChild(row);
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+      const el = document.getElementById('typing-row');
+      if (el) el.remove();
+    }
+
+    function restoreHistory() {
+      if (!history.length) return;
+      history.forEach(msg => addMessage(msg.role === 'user' ? 'user' : 'model', msg.parts[0].text, false));
+    }
+
+    restoreHistory();
+
+    // ── NO API BANNER ─────────────────────────────────────────────
+    function showNoApiBanner() {
+      if (document.getElementById('no-api-banner')) return;
+      const b = document.createElement('div');
+      b.id = 'no-api-banner';
+      b.className = 'no-api-banner';
+      b.innerHTML = '⚙️ Configure sua <strong id="banner-link">chave API do Gemini</strong> para começar.';
+      chatArea.appendChild(b);
+      document.getElementById('banner-link').onclick = () => openModal('settings-modal');
+    }
+
+    if (!apiKey) showNoApiBanner();
+
+    // ── GEMINI API ────────────────────────────────────────────────
+    async function sendToGemini(userText) {
+      if (!apiKey) { showNoApiBanner(); return; }
+      if (isLoading) return;
+      isLoading = true;
+      document.getElementById('send-btn').disabled = true;
+
+      history.push({ role: 'user', parts: [{ text: userText }] });
+      addTypingIndicator();
+
+      try {
+        const resp = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              system_instruction: { parts: [{ text: buildSystemPrompt() }] },
+              contents: history,
+              generationConfig: {
+                temperature: 0.65,
+                maxOutputTokens: 1400,
+                topP: 0.9
+              },
+              safetySettings: [
+                { category: 'HARM_CATEGORY_HARASSMENT',    threshold: 'BLOCK_NONE' },
+                { category: 'HARM_CATEGORY_HATE_SPEECH',   threshold: 'BLOCK_NONE' }
+              ]
+            })
+          }
+        );
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.error?.message || `HTTP ${resp.status}`);
+        }
+
+        const data  = await resp.json();
+        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text
+                   || 'Hmm, não consegui gerar uma resposta. Tente novamente.';
+
+        history.push({ role: 'model', parts: [{ text: reply }] });
+        localStorage.setItem('yomi_history', JSON.stringify(history));
+
+        removeTypingIndicator();
+        addMessage('model', reply);
+
+        const b = document.getElementById('no-api-banner');
+        if (b) b.remove();
+
+      } catch (e) {
+        removeTypingIndicator();
+        let msg = `Erro: ${e.message}`;
+        if (e.message.includes('API_KEY') || e.message.includes('key')) {
+          msg = '🔑 Chave API inválida ou sem permissão. Verifique nas configurações.';
+        }
+        addMessage('model', msg);
+        history.pop();
+      } finally {
+        isLoading = false;
+        document.getElementById('send-btn').disabled = false;
+      }
+    }
+
+    // ── INPUT ─────────────────────────────────────────────────────
+    const msgInput = document.getElementById('msg-input');
+    const sendBtn  = document.getElementById('send-btn');
+
+    function autoResize() {
+      msgInput.style.height = 'auto';
+      msgInput.style.height = Math.min(msgInput.scrollHeight, 120) + 'px';
+    }
+
+    msgInput.addEventListener('input', autoResize);
+
+    async function handleSend() {
+      const text = msgInput.value.trim();
+      if (!text || isLoading) return;
+      msgInput.value = '';
+      autoResize();
+      addMessage('user', text);
+      await sendToGemini(text);
+    }
+
+    sendBtn.addEventListener('click', handleSend);
+    msgInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+    });
+
+    document.querySelectorAll('.suggestion-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        msgInput.value = pill.dataset.text;
+        autoResize();
+        msgInput.focus();
+      });
+    });
+
+    // ── MODALS ────────────────────────────────────────────────────
+    function openModal(id)  { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    document.querySelectorAll('.modal-overlay').forEach(o => {
+      o.addEventListener('click', e => { if (e.target === o) closeModal(o.id); });
+    });
+
+    // Settings
+    document.getElementById('settings-btn').addEventListener('click', () => {
+      document.getElementById('api-key-input').value = apiKey;
+      openModal('settings-modal');
+    });
+
+    document.getElementById('api-save-btn').addEventListener('click', () => {
+      const key = document.getElementById('api-key-input').value.trim();
+      if (key) {
+        apiKey = key;
+        localStorage.setItem('yomi_api_key', key);
+        const b = document.getElementById('no-api-banner');
+        if (b) b.remove();
+      }
+      closeModal('settings-modal');
+    });
+
+    document.getElementById('clear-history-btn').addEventListener('click', () => {
+      if (confirm('Limpar todo o histórico do chat?')) {
+        history = [];
+        localStorage.removeItem('yomi_history');
+        location.reload();
+      }
+    });
+
+    // Obra modal
+    document.getElementById('context-chip').addEventListener('click', () => {
+      if (obra) {
+        document.getElementById('obra-nome').value      = obra.nome      || '';
+        document.getElementById('obra-tipo').value      = obra.tipo      || 'anime';
+        document.getElementById('obra-temporada').value = obra.temporada || '';
+        document.getElementById('obra-episodio').value  = obra.episodio  || '';
+        document.getElementById('obra-capitulo').value  = obra.capitulo  || '';
+      }
+      updateObraFields();
+      openModal('obra-modal');
+    });
+
+    document.getElementById('obra-save-btn').addEventListener('click', () => {
+      const nome      = document.getElementById('obra-nome').value.trim();
+      const tipo      = document.getElementById('obra-tipo').value;
+      const temporada = document.getElementById('obra-temporada').value.trim();
+      const episodio  = document.getElementById('obra-episodio').value.trim();
+      const capitulo  = document.getElementById('obra-capitulo').value.trim();
+
+      if (nome) {
+        obra = { nome, tipo, temporada, episodio, capitulo };
+        localStorage.setItem('yomi_obra', JSON.stringify(obra));
+        updateContextChip();
+
+        let prog = [];
+        if (temporada) prog.push(`Temporada ${temporada}`);
+        if (episodio)  prog.push(`EP ${episodio}`);
+        if (capitulo)  prog.push(`CAP ${capitulo}`);
+        const progStr = prog.length ? ` | ${prog.join(' · ')}` : '';
+
+        addMessage('model', `✦ Contexto definido: **${nome}** (${tipo})${progStr}. Calibrei meu radar de spoilers para o seu progresso!`);
+      }
+      closeModal('obra-modal');
+    });
+
+    document.getElementById('obra-clear-btn').addEventListener('click', () => {
+      obra = null;
+      localStorage.removeItem('yomi_obra');
+      updateContextChip();
+      closeModal('obra-modal');
+    });
+
+    // ── PWA: SERVICE WORKER + INSTALL ─────────────────────────────
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(err => {
+        console.warn('SW registration failed:', err);
+      });
+    }
+
+    let deferredPrompt = null;
+    const installBanner = document.getElementById('install-banner');
+
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      deferredPrompt = e;
+      setTimeout(() => installBanner.classList.add('show'), 2000);
+    });
+
+    document.getElementById('install-btn').addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      installBanner.classList.remove('show');
+    });
+
+    document.getElementById('install-dismiss').addEventListener('click', () => {
+      installBanner.classList.remove('show');
+    });
+
+    window.addEventListener('appinstalled', () => {
+      installBanner.classList.remove('show');
+    });
+  </script>
+</body>
+</html>
