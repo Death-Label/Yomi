@@ -526,14 +526,14 @@
 
     /* Install banner */
     .install-banner {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-      padding: 14px 18px;
-      padding-bottom: max(14px, env(safe-area-inset-bottom));
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      padding: 12px 16px;
       background: var(--surface2);
-      border-top: 1px solid var(--border2);
+      border-bottom: 1px solid var(--border2);
       display: flex; align-items: center; gap: 12px;
-      transform: translateY(100%);
+      transform: translateY(-100%);
       transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+      box-shadow: var(--shadow-md);
     }
 
     .install-banner.show { transform: translateY(0); }
@@ -648,6 +648,84 @@
       from { box-shadow: 0 0 8px var(--accent-glow); }
       to   { box-shadow: 0 0 20px var(--accent-glow), 0 0 36px var(--accent2-glow); }
     }
+    /* ── TAB BAR ─────────────────────────────────────────────────── */
+    .tab-bar {
+      position: relative; z-index: 9;
+      display: flex; align-items: center; gap: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto; overflow-y: hidden;
+      flex-shrink: 0;
+      scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+
+    .tab {
+      display: flex; align-items: center; gap: 6px;
+      padding: 0 14px;
+      height: 38px;
+      border-right: 1px solid var(--border);
+      font-size: 12px; font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background var(--transition), color var(--transition);
+      position: relative;
+      max-width: 160px;
+      user-select: none;
+    }
+
+    .tab-label {
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      max-width: 100px;
+    }
+
+    .tab::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      transform: scaleX(0);
+      transition: transform var(--transition);
+      border-radius: 2px 2px 0 0;
+    }
+
+    .tab.active {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .tab.active::after { transform: scaleX(1); }
+
+    .tab-close {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; color: var(--text-dim);
+      flex-shrink: 0;
+      transition: all var(--transition);
+    }
+
+    .tab-close:hover {
+      background: var(--surface3);
+      color: var(--accent);
+    }
+
+    .tab-new {
+      display: flex; align-items: center; justify-content: center;
+      width: 38px; height: 38px;
+      flex-shrink: 0;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      transition: all var(--transition);
+      border-right: 1px solid var(--border);
+    }
+
+    .tab-new:hover { color: var(--accent2); background: var(--surface2); }
+
   </style>
 </head>
 <body>
@@ -665,11 +743,16 @@
       </div>
     </div>
     <div class="header-actions">
-      <button class="icon-btn" id="new-chat-btn" title="Nova conversa">✦</button>
       <button class="icon-btn" id="theme-btn" title="Alternar tema">☀️</button>
       <button class="icon-btn" id="settings-btn" title="Configurações">⚙️</button>
     </div>
   </header>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar" id="tab-bar">
+    <!-- tabs renderizadas por JS -->
+    <div class="tab-new" id="tab-new-btn" title="Nova conversa">＋</div>
+  </div>
 
   <!-- CONTEXT BAR -->
   <div class="context-bar">
@@ -714,19 +797,6 @@
     <p>Instalar Yomi <span>Acesso rápido na tela inicial</span></p>
     <button class="install-btn" id="install-btn">Instalar</button>
     <button class="install-dismiss" id="install-dismiss">✕</button>
-  </div>
-
-  <!-- ── MODAL: NOVA CONVERSA ──────────────────────────────────── -->
-  <div class="modal-overlay" id="newchat-modal">
-    <div class="modal">
-      <div class="modal-handle"></div>
-      <h3>✦ Nova conversa</h3>
-      <p style="font-size:14px;color:var(--text-muted);line-height:1.6;margin-bottom:20px">
-        Isso vai apagar o histórico desta conversa. A obra atual será mantida.
-      </p>
-      <button class="btn-primary" id="newchat-confirm-btn">🗑️ Limpar e começar do zero</button>
-      <button class="btn-ghost" id="newchat-cancel-btn">Cancelar</button>
-    </div>
   </div>
 
   <!-- ── MODAL: OBRA ATUAL ──────────────────────────────────────── -->
@@ -823,13 +893,46 @@
        JAVASCRIPT
   ═══════════════════════════════════════════════════════════════ -->
   <script>
-    let MODEL = localStorage.getItem('yomi_model') || 'gemini-2.5-flash';
-
-    let apiKey  = localStorage.getItem('yomi_api_key') || '';
-    let theme   = localStorage.getItem('yomi_theme')   || 'dark';
-    let history = JSON.parse(localStorage.getItem('yomi_history') || '[]');
-    let obra    = JSON.parse(localStorage.getItem('yomi_obra')    || 'null');
+    let MODEL  = localStorage.getItem('yomi_model') || 'gemini-2.5-flash';
+    let apiKey = localStorage.getItem('yomi_api_key') || '';
+    let theme  = localStorage.getItem('yomi_theme')   || 'dark';
     let isLoading = false;
+
+    // ── CONVERSATIONS (tab system) ────────────────────────────────
+    function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+    function loadConvs() {
+      const raw = localStorage.getItem('yomi_convs');
+      if (raw) return JSON.parse(raw);
+      // migrate legacy single conversation
+      const legacyHistory = localStorage.getItem('yomi_history');
+      const legacyObra    = localStorage.getItem('yomi_obra');
+      const first = {
+        id:      genId(),
+        label:   'Conversa 1',
+        history: legacyHistory ? JSON.parse(legacyHistory) : [],
+        obra:    legacyObra    ? JSON.parse(legacyObra)    : null,
+      };
+      localStorage.removeItem('yomi_history');
+      localStorage.removeItem('yomi_obra');
+      return [first];
+    }
+
+    function saveConvs() {
+      localStorage.setItem('yomi_convs', JSON.stringify(convs));
+      localStorage.setItem('yomi_active', activeId);
+    }
+
+    let convs    = loadConvs();
+    let activeId = localStorage.getItem('yomi_active') || convs[0].id;
+    if (!convs.find(c => c.id === activeId)) activeId = convs[0].id;
+
+    const conv      = ()  => convs.find(c => c.id === activeId);
+    const getHist   = ()  => conv().history;
+    const getObra   = ()  => conv().obra;
+    const setObra   = (o) => { conv().obra = o; saveConvs(); };
+    const pushHist  = (m) => { conv().history.push(m); saveConvs(); };
+    const popHist   = ()  => { conv().history.pop();   saveConvs(); };
 
     // ── SAKURA PETALS ─────────────────────────────────────────────
     (function initSakura() {
@@ -928,10 +1031,6 @@
       wave.addEventListener('animationend', () => wave.remove());
     }
 
-    document.querySelectorAll('.icon-btn, .btn-primary, .btn-ghost, .send-btn, .suggestion-pill, .context-chip').forEach(el => {
-      el.classList.add('ripple-host');
-      el.addEventListener('pointerdown', e => addRipple(e, el));
-    });
     function applyTheme(t) {
       theme = t;
       document.documentElement.setAttribute('data-theme', t);
@@ -944,6 +1043,80 @@
     document.getElementById('theme-btn').addEventListener('click', () => {
       applyTheme(theme === 'dark' ? 'light' : 'dark');
     });
+
+    // ── TAB RENDERING ─────────────────────────────────────────────
+    const tabBar = document.getElementById('tab-bar');
+    const tabNewBtn = document.getElementById('tab-new-btn');
+
+    function renderTabs() {
+      // remove all existing tabs (keep the + button)
+      tabBar.querySelectorAll('.tab').forEach(t => t.remove());
+
+      convs.forEach(c => {
+        const tab = document.createElement('div');
+        tab.className = 'tab' + (c.id === activeId ? ' active' : '');
+        tab.dataset.id = c.id;
+
+        const lbl = document.createElement('span');
+        lbl.className = 'tab-label';
+        lbl.textContent = c.obra?.nome ? (TIPO_CONFIG[c.obra.tipo]?.icon || '💬') + ' ' + c.obra.nome : c.label;
+        tab.appendChild(lbl);
+
+        // close btn only if more than 1 tab
+        if (convs.length > 1) {
+          const close = document.createElement('span');
+          close.className = 'tab-close';
+          close.textContent = '✕';
+          close.title = 'Fechar conversa';
+          close.addEventListener('click', e => {
+            e.stopPropagation();
+            closeTab(c.id);
+          });
+          tab.appendChild(close);
+        }
+
+        tab.addEventListener('click', () => switchTab(c.id));
+        tabBar.insertBefore(tab, tabNewBtn);
+      });
+
+      // scroll active tab into view
+      const activeTab = tabBar.querySelector('.tab.active');
+      if (activeTab) activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+
+    function switchTab(id) {
+      if (id === activeId) return;
+      activeId = id;
+      saveConvs();
+      renderTabs();
+      updateContextChip();
+      renderChat();
+    }
+
+    function newTab() {
+      const n = convs.length + 1;
+      const c = { id: genId(), label: `Conversa ${n}`, history: [], obra: null };
+      convs.push(c);
+      activeId = c.id;
+      saveConvs();
+      renderTabs();
+      updateContextChip();
+      renderChat();
+    }
+
+    function closeTab(id) {
+      const idx = convs.findIndex(c => c.id === id);
+      convs.splice(idx, 1);
+      if (activeId === id) {
+        activeId = convs[Math.max(0, idx - 1)].id;
+      }
+      saveConvs();
+      renderTabs();
+      updateContextChip();
+      renderChat();
+    }
+
+    tabNewBtn.addEventListener('click', newTab);
 
     // ── OBRA CONTEXT ──────────────────────────────────────────────
 
@@ -959,6 +1132,7 @@
     function updateContextChip() {
       const icon  = document.getElementById('ctx-icon');
       const label = document.getElementById('ctx-label');
+      const obra  = getObra();
 
       if (obra && obra.nome) {
         const cfg = TIPO_CONFIG[obra.tipo] || TIPO_CONFIG.anime;
@@ -1002,7 +1176,7 @@
       document.getElementById('row-filme').style.display = cfg.row === 'filme' ? '' : 'none';
 
       // Context chip placeholder
-      if (!obra || !obra.nome) {
+      if (!getObra() || !getObra().nome) {
         document.getElementById('ctx-label').innerHTML =
           `Definir o que está ${cfg.verb}...`;
       }
@@ -1012,6 +1186,7 @@
 
     // ── SYSTEM PROMPT ─────────────────────────────────────────────
     function buildSystemPrompt() {
+      const obra = getObra();
       let obraCtx = '';
       if (obra && obra.nome) {
         let parts = [];
@@ -1165,12 +1340,22 @@ REGRAS INEGOCIÁVEIS:
       if (el) el.remove();
     }
 
-    function restoreHistory() {
-      if (!history.length) return;
-      history.forEach(msg => addMessage(msg.role === 'user' ? 'user' : 'model', msg.parts[0].text, false));
+    function renderChat() {
+      // limpa mensagens existentes mas preserva o welcome screen
+      chatArea.querySelectorAll('.msg-row, #no-api-banner').forEach(el => el.remove());
+      welcome.style.display = '';
+
+      const h = getHist();
+      if (h.length > 0) {
+        h.forEach(msg => addMessage(msg.role === 'user' ? 'user' : 'model', msg.parts[0].text, false));
+      }
+      if (!apiKey) showNoApiBanner();
     }
 
-    restoreHistory();
+    // init
+    renderTabs();
+    updateContextChip();
+    renderChat();
 
     // ── NO API BANNER ─────────────────────────────────────────────
     function showNoApiBanner() {
@@ -1185,6 +1370,45 @@ REGRAS INEGOCIÁVEIS:
 
     if (!apiKey) showNoApiBanner();
 
+    // ── AUTO TITLE ────────────────────────────────────────────────
+    async function generateTabTitle(convId) {
+      const c = convs.find(x => x.id === convId);
+      if (!c || !apiKey) return;
+
+      // Monta um resumo curto do contexto para o modelo titular
+      const obraCtx = c.obra?.nome
+        ? `Obra: ${c.obra.nome} (${c.obra.tipo}). `
+        : '';
+      const firstUser  = c.history.find(m => m.role === 'user')?.parts[0].text  || '';
+      const firstModel = c.history.find(m => m.role === 'model')?.parts[0].text || '';
+      const snippet    = `${obraCtx}Usuário: ${firstUser.slice(0, 200)}\nYomi: ${firstModel.slice(0, 200)}`;
+
+      try {
+        const resp = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                role: 'user',
+                parts: [{ text: `Com base neste trecho de conversa sobre anime/manga/série, crie um título curto e descritivo (máximo 5 palavras, sem aspas, sem emoji, sem ponto final). Foque na obra e no tema discutido.\n\n${snippet}` }]
+              }],
+              generationConfig: { temperature: 0.4, maxOutputTokens: 20 }
+            })
+          }
+        );
+        if (!resp.ok) return;
+        const data  = await resp.json();
+        const title = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim().replace(/["'.]/g, '');
+        if (title && title.length > 1) {
+          c.label = title;
+          saveConvs();
+          renderTabs();
+        }
+      } catch (_) { /* silencioso — título é best-effort */ }
+    }
+
     // ── GEMINI API ────────────────────────────────────────────────
     async function sendToGemini(userText) {
       if (!apiKey) { showNoApiBanner(); return; }
@@ -1192,7 +1416,7 @@ REGRAS INEGOCIÁVEIS:
       isLoading = true;
       document.getElementById('send-btn').disabled = true;
 
-      history.push({ role: 'user', parts: [{ text: userText }] });
+      pushHist({ role: 'user', parts: [{ text: userText }] });
       addTypingIndicator();
 
       try {
@@ -1203,7 +1427,7 @@ REGRAS INEGOCIÁVEIS:
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               system_instruction: { parts: [{ text: buildSystemPrompt() }] },
-              contents: history,
+              contents: getHist(),
               generationConfig: {
                 temperature: 0.65,
                 maxOutputTokens: 1400,
@@ -1226,8 +1450,11 @@ REGRAS INEGOCIÁVEIS:
         const reply = data.candidates?.[0]?.content?.parts?.[0]?.text
                    || 'Hmm, não consegui gerar uma resposta. Tente novamente.';
 
-        history.push({ role: 'model', parts: [{ text: reply }] });
-        localStorage.setItem('yomi_history', JSON.stringify(history));
+        pushHist({ role: 'model', parts: [{ text: reply }] });
+
+        // Gera título automático após a primeira troca completa
+        const isFirstExchange = getHist().filter(m => m.role === 'model').length === 1;
+        if (isFirstExchange) generateTabTitle(conv().id);
 
         removeTypingIndicator();
         addMessage('model', reply);
@@ -1242,7 +1469,7 @@ REGRAS INEGOCIÁVEIS:
           msg = '🔑 Chave API inválida ou sem permissão. Verifique nas configurações.';
         }
         addMessage('model', msg);
-        history.pop();
+        popHist();
       } finally {
         isLoading = false;
         document.getElementById('send-btn').disabled = false;
@@ -1294,22 +1521,7 @@ REGRAS INEGOCIÁVEIS:
       o.addEventListener('click', e => { if (e.target === o) closeModal(o.id); });
     });
 
-    // Nova conversa
-    document.getElementById('new-chat-btn').addEventListener('click', () => {
-      if (history.length === 0) return;
-      openModal('newchat-modal');
-    });
-
-    document.getElementById('newchat-confirm-btn').addEventListener('click', () => {
-      history = [];
-      localStorage.removeItem('yomi_history');
-      closeModal('newchat-modal');
-      location.reload();
-    });
-
-    document.getElementById('newchat-cancel-btn').addEventListener('click', () => {
-      closeModal('newchat-modal');
-    });
+    // Nova conversa — agora via tab system, handler antigo removido
 
     document.getElementById('settings-btn').addEventListener('click', () => {
       document.getElementById('api-key-input').value = apiKey;
@@ -1331,15 +1543,18 @@ REGRAS INEGOCIÁVEIS:
     });
 
     document.getElementById('clear-history-btn').addEventListener('click', () => {
-      if (confirm('Limpar todo o histórico do chat?')) {
-        history = [];
-        localStorage.removeItem('yomi_history');
-        location.reload();
+      if (confirm('Limpar o histórico desta conversa?')) {
+        conv().history = [];
+        saveConvs();
+        renderChat();
+        renderTabs();
+        closeModal('settings-modal');
       }
     });
 
     // ── OBRA: abrir modal ────────────────────────────────────────
     document.getElementById('context-chip').addEventListener('click', () => {
+      const obra = getObra();
       if (obra) {
         document.getElementById('obra-nome').value      = obra.nome      || '';
         document.getElementById('obra-tipo').value      = obra.tipo      || 'anime';
@@ -1362,15 +1577,17 @@ REGRAS INEGOCIÁVEIS:
     document.getElementById('obra-save-btn').addEventListener('click', () => {
       const nome      = document.getElementById('obra-nome').value.trim();
       const tipo      = document.getElementById('obra-tipo').value;
-      const cfg       = TIPO_CONFIG[tipo] || TIPO_CONFIG.anime;
       const temporada = document.getElementById('obra-temporada').value.trim();
       const episodio  = document.getElementById('obra-episodio').value.trim();
       const volume    = document.getElementById('obra-volume').value.trim();
       const capitulo  = document.getElementById('obra-capitulo').value.trim();
 
       if (nome) {
-        obra = { nome, tipo, temporada, episodio, volume, capitulo };
-        localStorage.setItem('yomi_obra', JSON.stringify(obra));
+        setObra({ nome, tipo, temporada, episodio, volume, capitulo });
+        // atualiza label da aba com o nome da obra
+        conv().label = nome;
+        saveConvs();
+        renderTabs();
         updateContextChip();
 
         let prog = [];
@@ -1386,8 +1603,10 @@ REGRAS INEGOCIÁVEIS:
     });
 
     document.getElementById('obra-clear-btn').addEventListener('click', () => {
-      obra = null;
-      localStorage.removeItem('yomi_obra');
+      setObra(null);
+      conv().label = `Conversa ${convs.indexOf(conv()) + 1}`;
+      saveConvs();
+      renderTabs();
       updateContextChip();
       closeModal('obra-modal');
     });
@@ -1422,6 +1641,12 @@ REGRAS INEGOCIÁVEIS:
 
     window.addEventListener('appinstalled', () => {
       installBanner.classList.remove('show');
+    });
+
+    // ── RIPPLE: registrar em todos os botões após DOM pronto ───────
+    document.querySelectorAll('.icon-btn, .btn-primary, .btn-ghost, .send-btn, .suggestion-pill, .context-chip').forEach(el => {
+      el.classList.add('ripple-host');
+      el.addEventListener('pointerdown', e => addRipple(e, el));
     });
   </script>
 </body>
